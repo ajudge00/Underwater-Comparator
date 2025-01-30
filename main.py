@@ -1,7 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication
 from src.gui.gui import GUI
-import qdarktheme
 
 
 class App:
@@ -12,6 +11,13 @@ class App:
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    qdarktheme.setup_theme()
+
+    try:
+        import qdarktheme
+        print("pyqtdarktheme is installed.")
+        qdarktheme.setup_theme()
+    except ImportError:
+        print("pyqtdarktheme is NOT installed.")
+
     gui = App("src/gui/main.ui")
     app.exec_()
