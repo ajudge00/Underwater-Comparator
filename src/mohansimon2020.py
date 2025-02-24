@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from src.logger import print_params
-from src.methods.contrast import gamma_correction, clahe_with_lab, histogram_linearization
+from src.methods.contrast import gamma_correction, clahe_with_lab, histogram_linearization_auto
 from src.methods.fusion import apply_fusion
 from src.methods.sharpening import normalized_unsharp_masking
 from src.methods.weight_maps import get_weight_map, WeightMapMethods, normalize_weight_maps
@@ -26,14 +26,12 @@ def MohanSimon2020(img: np.ndarray,
                    wb_method: int = 0,
                    clahe_clip_limit: float = 3.0,
                    clahe_tile_grid_size: int = 8,
-                   param_r: float = 0.5,
-                   # hist_lin_iters: int = 10,
                    fusion_method: int = 1,
                    msf_levels: int = 3) -> [np.ndarray]:
     """
     My implementation of Mohan and Simon's "Underwater Image Enhancement
     based on Histogram Manipulation and Multiscale Fusion".
-    Works well, but the histogram linearization is not automatic yet.
+    Works well enough.
     :param img: A uint8 [0, 255] bgr image.
     :param do_precomp: Whether to apply the precompensation before the white balance step.
     :param precomp_red: Alpha value for the red precompensation.
@@ -42,7 +40,6 @@ def MohanSimon2020(img: np.ndarray,
     :param wb_method: Index of white balance method to use.
     :param clahe_clip_limit:
     :param clahe_tile_grid_size:
-    :param param_r: The power r for histogram linearization.
     :param fusion_method: Index of fusion method to use.
     :param msf_levels: Number of levels in the pyramids for Multiscale Fusion.
     :return: All the steps and the result.
@@ -71,7 +68,7 @@ def MohanSimon2020(img: np.ndarray,
 
     # CLAHE and HISTOGRAM LINEARIZATION
     clahed = clahe_with_lab(input1, clahe_clip_limit, (clahe_tile_grid_size, clahe_tile_grid_size))
-    hist_lind = histogram_linearization(input2, param_r)
+    hist_lind, best_r = histogram_linearization_auto(input2)
 
     # WEIGHT MAPS
     clahed_lcw = get_weight_map(clahed, WeightMapMethods.LAPLACIAN)
@@ -89,6 +86,10 @@ def MohanSimon2020(img: np.ndarray,
 
     # FUSION
     fusioned = apply_fusion(fusion_method, clahed, hist_lind, clahed_normw, hist_lind_normw, levels=msf_levels)
+
+    # text for best r on histlin
+    text = f"Best r value: {best_r}"
+    cv2.putText(hist_lind, text, (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
     return [original, precomped_r, precomped_rb,
             white_balanced, input1, input2,

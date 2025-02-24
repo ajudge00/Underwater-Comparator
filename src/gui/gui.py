@@ -1,3 +1,4 @@
+import datetime
 import enum
 import os
 
@@ -6,7 +7,7 @@ import numpy as np
 from PyQt5 import uic
 from PyQt5.QtGui import QImage, QPixmap, QIcon
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QPushButton, QLabel, QTabWidget, QCheckBox, QSlider, QComboBox, \
-    QSpinBox, QDoubleSpinBox
+    QSpinBox
 
 from src.ancuti2018 import Ancuti2018, ANCUTI2018_STEPS
 from src.mohansimon2020 import MohanSimon2020, MOHANSIMON2020_STEPS
@@ -41,6 +42,8 @@ class GUI(QMainWindow):
         self.btn_process.clicked.connect(self.process_image)
         self.btn_default = self.findChild(QPushButton, "btn_default")
         self.btn_default.clicked.connect(self.reset_defaults)
+        self.btn_save = self.findChild(QPushButton, "btn_save")
+        self.btn_save.clicked.connect(self.save_results)
 
         self.disp_original = self.findChild(QLabel, "disp_original")
         self.disp_processed = self.findChild(QLabel, "disp_processed")
@@ -68,7 +71,6 @@ class GUI(QMainWindow):
         self.mohan_slider_clahe_clip_limit = self.findChild(QSlider, "mohan_slider_clahe_clip_limit")
         self.mohan_combo_wb_method = self.findChild(QComboBox, "mohan_combo_wb_method")
         self.mohan_spinner_tile_grid_size = self.findChild(QSpinBox, "mohan_spinner_tile_grid_size")
-        self.mohan_spinner_histlin_iters = self.findChild(QSpinBox, "mohan_spinner_histlin_iters")
         self.mohan_combo_fusion_method = self.findChild(QComboBox, "mohan_combo_fusion_method")
         self.mohan_spinner_msf_levels = self.findChild(QSpinBox, "mohan_spinner_msf_levels")
         self.mohan_combo_see_step = self.findChild(QComboBox, "mohan_combo_see_step")
@@ -185,8 +187,6 @@ class GUI(QMainWindow):
         elif framework == Frameworks.MOHANSIMON2020.value:
             clahe_clip_limit = self.findChild(QSlider, "mohan_slider_clahe_clip_limit").value() / 10.0
             clahe_tile_grid_size = self.findChild(QSpinBox, "mohan_spinner_tile_grid_size").value()
-            # hist_lin_iters = self.findChild(QSpinBox, "mohan_spinner_histlin_iters").value()
-            param_r = self.findChild(QDoubleSpinBox, "mohan_spinner_param_r").value()
 
             self.result_set = MohanSimon2020(
                 self.img_original,
@@ -197,8 +197,6 @@ class GUI(QMainWindow):
                 0,
                 float(clahe_clip_limit),
                 clahe_tile_grid_size,
-                param_r,
-                # hist_lin_iters,
                 self.mohan_combo_fusion_method.currentIndex(),
                 self.mohan_spinner_msf_levels.value()
             )
@@ -222,6 +220,30 @@ class GUI(QMainWindow):
 
         self.display_image(self.result_set[-1], 'bottom')
         self.update_metrics()
+        self.btn_save.setEnabled(True)
+
+    def save_results(self):
+        try:
+            save_path = QFileDialog.getExistingDirectory(self, "Select a directory", os.getcwd(), QFileDialog.ShowDirsOnly)
+
+            print(f"Selected folder: {save_path}")
+
+            save_path = os.path.join(
+                save_path,
+                f"{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{self.last_framework_run.name}_{self.filename}"
+            )
+
+            os.makedirs(save_path, exist_ok=False)
+            i = 0
+            for result in self.result_set:
+                if result.dtype != np.uint8:
+                    result = (result * 255).astype(np.uint8)
+
+                cv2.imwrite(os.path.join(save_path, f"{'{:02d}'.format(i)}.jpg"), result)
+                i += 1
+
+        except Exception as e:
+            print(f"Error: {e}")
 
     def update_metrics(self):
         original_uciqe = round(get_uciqe(self.img_original), 4)
@@ -249,7 +271,6 @@ class GUI(QMainWindow):
         self.mohan_slider_gamma.setValue(20)
         self.mohan_slider_clahe_clip_limit.setValue(40)
         self.mohan_spinner_tile_grid_size.setValue(8)
-        self.mohan_spinner_histlin_iters.setValue(10)
         self.mohan_combo_fusion_method.setCurrentIndex(0)
         self.mohan_spinner_msf_levels.setValue(3)
 
