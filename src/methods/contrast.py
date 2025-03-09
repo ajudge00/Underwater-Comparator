@@ -50,7 +50,7 @@ def clahe_with_lab(img: np.ndarray, clip_limit: float = 3.0, tile_grid_size=(8, 
     return res
 
 
-def histogram_linearization(img: np.ndarray, r: float = 1.0) -> np.ndarray:
+def histogram_linearization2(img: np.ndarray, r: float = 1.0) -> np.ndarray:
     """
     Based on "A Novel Approach for Contrast Enhancement Based on Histogram Equalization" by Yeganeh et al.
     :param img: A uint8 [0, 255] bgr image
@@ -190,7 +190,23 @@ def tester_histogram_linearization_auto(img: np.ndarray):
         plt.savefig(plot_filename)
         plt.close()
 
+def histogram_linearization(img: np.ndarray) -> (np.ndarray, float):
+    assert img.dtype == np.uint8 and img.ndim == 3 and np.max(img) > 1
 
+    img_lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    img_lum = img_lab[:, :, 0]
 
-def bbheq(img, levels):
-    pass
+    hist, bins = np.histogram(img_lum.flatten(), bins=256, range=[0, 256])
+    pdf = hist / np.sum(hist)
+
+    r = 0.4
+    P_max = np.max(pdf)
+    pdf_lind = np.where((pdf > 0) & (pdf < 255), (pdf / P_max) ** r * P_max, pdf)
+    pdf_lind = pdf_lind / np.sum(pdf_lind)
+    cdf_lind = np.cumsum(pdf_lind)
+    cdf_scaled_lind = (cdf_lind * 255).astype(np.uint8)
+
+    img_lind = cdf_scaled_lind[img_lum]
+    img_lind = cv2.merge([img_lind, img_lab[:, :, 1], img_lab[:, :, 2]])
+
+    return cv2.cvtColor(img_lind, cv2.COLOR_LAB2BGR), r

@@ -1,15 +1,16 @@
 import cv2
 from matplotlib import pyplot as plt
 
-from src.methods.contrast import tester_histogram_linearization_auto, histogram_linearization_auto
+from src.methods.contrast import histogram_linearization
 
 
 def main(image):
     original = cv2.imread(image, cv2.IMREAD_COLOR)
-    histlin = histogram_linearization_auto(original)
+    histlin, _ = histogram_linearization(original)
 
     cv2.imshow('original', original)
     cv2.imshow('histlin', histlin)
+
     cv2.waitKey(0)
 
 
