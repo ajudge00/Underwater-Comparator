@@ -45,3 +45,28 @@ def get_uciqe(img: np.ndarray) -> float:
 
     quality_val = c1 * chroma_var + c2 * con_lum + c3 * saturation_avg
     return quality_val
+
+
+def get_histogram_spread(histogram):
+    """
+    From the article Performance Metrics for Image Contrast by Tripathi et al.
+    :param histogram:
+    :return:
+    """
+    cumulative_hist = histogram.cumsum()
+
+    # kiszamoljuk az elso es harmadik kvartilist
+    # (az osszes elofordulas osszegenek negyedet es haromnegyedet)
+    max_cumulative_value = cumulative_hist.max()
+    quartile1_value = 0.25 * max_cumulative_value
+    quartile3_value = 0.75 * max_cumulative_value
+
+    # majd megkeressuk, hogy melyik intenzitasok erik el a ket elofordulast
+    quartile1_bin = np.argmax(cumulative_hist >= quartile1_value)
+    quartile3_bin = np.argmax(cumulative_hist >= quartile3_value)
+
+    quartile_distance = quartile3_bin - quartile1_bin
+    histogram_spread = quartile_distance / 255
+
+    return histogram_spread
+
