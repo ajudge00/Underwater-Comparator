@@ -15,6 +15,7 @@ equalized_hist, _ = np.histogram(equalized_image.flatten(), bins=256, range=[0, 
 # HISTOGRAM "LINEARIZATION"
 r = 0.4
 P_max = np.max(pdf)
+
 pdf_lind = np.where((pdf > 0) & (pdf < 255), (pdf / P_max) ** r * P_max, pdf)
 pdf_lind = pdf_lind / np.sum(pdf_lind)
 cdf_lind = np.cumsum(pdf_lind)
