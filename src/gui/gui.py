@@ -81,13 +81,15 @@ class GUI(QMainWindow):
 
         # YANG2011
         self.yang_combo_pixels_considered = self.findChild(QComboBox, "yang_combo_pixels_considered")
-        self.yang_combo_use_max = self.findChild(QComboBox, "yang_combo_use_max")
         self.yang_combo_trans_smoothing_method = self.findChild(QComboBox, "yang_combo_trans_smoothing_method")
         self.yang_combo_wb_method = self.findChild(QComboBox, "yang_combo_wb_method")
         self.yang_combo_see_step = self.findChild(QComboBox, "yang_combo_see_step")
         self.yang_spinner_no_of_pixels = self.findChild(QSpinBox, "yang_spinner_no_of_pixels")
         self.yang_slider_perc_of_pixels = self.findChild(QSlider, "yang_slider_perc_of_pixels")
         self.yang_lbl_perc_of_pixels = self.findChild(QLabel, "yang_lbl_perc_of_pixels")
+        self.yang_spinner_dcp_patch_size = self.findChild(QSpinBox, "yang_spinner_dcp_patch_size")
+        self.yang_slider_perc_of_pixels = self.findChild(QSlider, "yang_slider_perc_of_pixels")
+        self.yang_spinner_median_ksize = self.findChild(QSpinBox, "yang_spinner_median_ksize")
 
         self.init_combo_boxes()
 
@@ -202,18 +204,16 @@ class GUI(QMainWindow):
             )
             self.last_framework_run = Frameworks.MOHANSIMON2020
         elif framework == Frameworks.YANG2011.value:
-            dcp_patch_size = self.findChild(QSpinBox, "yang_spinner_dcp_patch_size").value()
-            median_ksize = self.findChild(QSpinBox, "yang_spinner_median_ksize").value()
+            # median_ksize = self.findChild(QSpinBox, "yang_spinner_median_ksize").value()
 
             self.result_set = Yang2011(
                 self.img_original,
-                dcp_patch_size,
+                self.yang_spinner_dcp_patch_size.value(),
                 not bool(self.yang_combo_pixels_considered.currentIndex()),
                 self.yang_spinner_no_of_pixels.value(),
-                self.yang_slider_perc_of_pixels.value() / 100.0,
-                False if self.yang_combo_use_max.currentIndex() != 0 else True,
+                self.yang_slider_perc_of_pixels.value() / 10.0,
                 self.yang_combo_trans_smoothing_method.currentIndex(),
-                median_ksize,
+                self.yang_spinner_median_ksize.value(),
                 self.yang_combo_wb_method.currentIndex()
             )
             self.last_framework_run = Frameworks.YANG2011
@@ -235,6 +235,8 @@ class GUI(QMainWindow):
 
             os.makedirs(save_path, exist_ok=False)
             i = 0
+
+            print(self.result_set)
             for result in self.result_set:
                 if result.dtype != np.uint8:
                     result = (result * 255).astype(np.uint8)
@@ -274,11 +276,18 @@ class GUI(QMainWindow):
         self.mohan_combo_fusion_method.setCurrentIndex(0)
         self.mohan_spinner_msf_levels.setValue(3)
 
+        self.yang_spinner_dcp_patch_size.setValue(15)
+        self.yang_spinner_no_of_pixels.setValue(1000)
+        self.yang_combo_pixels_considered.setCurrentIndex(1)
+        self.yang_slider_perc_of_pixels.setValue(1)
+        self.yang_combo_trans_smoothing_method.setCurrentIndex(0)
+        self.yang_spinner_median_ksize.setValue(5)
+        self.yang_combo_wb_method.setCurrentIndex(0)
+
     def init_combo_boxes(self):
         wb_items = ["Gray World"]
         fusion_items = ["Naive Fusion", "Multiscale Fusion"]
         yang_pixels_considered = ["Fixed amount", "Percentage"]
-        yang_use_max = ["the maximum", "the mean"]
         yang_trans_smoothing = ["Median Filter (Yang et al.)", "Guided Filter (He et al.)"]
 
         self.ancuti_combo_wb_method.addItems(wb_items)
@@ -286,7 +295,6 @@ class GUI(QMainWindow):
         self.mohan_combo_wb_method.addItems(wb_items)
         self.mohan_combo_fusion_method.addItems(fusion_items)
         self.yang_combo_pixels_considered.addItems(yang_pixels_considered)
-        self.yang_combo_use_max.addItems(yang_use_max)
         self.yang_combo_trans_smoothing_method.addItems(yang_trans_smoothing)
         self.yang_combo_wb_method.addItems(wb_items)
 
@@ -303,7 +311,6 @@ class GUI(QMainWindow):
 
         self.yang_combo_pixels_considered.setCurrentIndex(1)
         self.yang_spinner_no_of_pixels.setEnabled(False)
-        self.yang_combo_use_max.setCurrentIndex(1)
         self.yang_combo_trans_smoothing_method.setCurrentIndex(0)
         self.yang_combo_wb_method.setCurrentIndex(0)
 
@@ -343,7 +350,7 @@ class GUI(QMainWindow):
             self.mohan_lbl_clahe_clip_limit.setText(str(value / 10.0))
         elif slider.objectName() == "yang_slider_perc_of_pixels":
             value = self.yang_slider_perc_of_pixels.value()
-            self.yang_lbl_perc_of_pixels.setText(str(value) + "%")
+            self.yang_lbl_perc_of_pixels.setText(str(value / 10) + "%")
 
     def change_displayed_step(self, value):
         if (self.result_set is not None and

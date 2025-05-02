@@ -10,7 +10,7 @@ def get_uciqe(img: np.ndarray) -> float:
      - σ_c is the standard deviation of chroma,
      - con_l is the contrast of luminance (difference between the top 1% and bottom 1% of luminance values),
      - μ_s is the average saturation,
-     - c1=0.4680c1=0.4680, c2=0.2745c2=0.2745, and c3=0.2576c3=0.2576
+     - c1=0.4680, c2=0.2745, and c3=0.2576
     :param img: A BGR uint8 [0-255] image
     :return: a float between 0 and 1
     """

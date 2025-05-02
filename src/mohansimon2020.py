@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from src.logger import print_params
-from src.methods.contrast import gamma_correction, clahe_with_lab, histogram_linearization_auto
+from src.methods.contrast import gamma_correction, clahe_with_lab, histogram_linearization
 from src.methods.fusion import apply_fusion
 from src.methods.sharpening import normalized_unsharp_masking
 from src.methods.weight_maps import get_weight_map, WeightMapMethods, normalize_weight_maps
@@ -68,7 +68,7 @@ def MohanSimon2020(img: np.ndarray,
 
     # CLAHE and HISTOGRAM LINEARIZATION
     clahed = clahe_with_lab(input1, clahe_clip_limit, (clahe_tile_grid_size, clahe_tile_grid_size))
-    hist_lind, best_r = histogram_linearization_auto(input2)
+    hist_lind, best_r = histogram_linearization(input2)
 
     # WEIGHT MAPS
     clahed_lcw = get_weight_map(clahed, WeightMapMethods.LAPLACIAN)

@@ -92,7 +92,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="tab_ancuti">
          <attribute name="title">
@@ -1094,7 +1094,7 @@
              <item>
               <widget class="QLabel" name="yang_lbl_perc_of_pixels">
                <property name="text">
-                <string>10%</string>
+                <string>0.1%</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -1113,17 +1113,20 @@
                 <item>
                  <widget class="QLabel" name="label_39">
                   <property name="text">
-                   <string>0%</string>
+                   <string>0.1%</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QSlider" name="yang_slider_perc_of_pixels">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
                   <property name="maximum">
-                   <number>100</number>
+                   <number>50</number>
                   </property>
                   <property name="value">
-                   <number>10</number>
+                   <number>1</number>
                   </property>
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
@@ -1139,7 +1142,7 @@
                 <item>
                  <widget class="QLabel" name="label_40">
                   <property name="text">
-                   <string>100%</string>
+                   <string>5.0%</string>
                   </property>
                  </widget>
                 </item>
@@ -1148,18 +1151,7 @@
              </item>
              <item>
               <widget class="QWidget" name="widget_24" native="true">
-               <layout class="QHBoxLayout" name="horizontalLayout_26">
-                <item>
-                 <widget class="QLabel" name="label_42">
-                  <property name="text">
-                   <string>Choose:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="yang_combo_use_max"/>
-                </item>
-               </layout>
+               <layout class="QHBoxLayout" name="horizontalLayout_26"/>
               </widget>
              </item>
             </layout>

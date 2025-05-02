@@ -1,3 +1,5 @@
+import math
+
 import cv2
 import numpy as np
 
@@ -21,22 +23,22 @@ def dark_channel(img: np.ndarray, patch_size: int = 9):
 def estimate_atmospheric_light(
         img: np.ndarray,
         dcp: np.ndarray,
-        use_max: bool = False,
         use_fixed_pixels: bool = False,
         fixed_num_pixels: int = 1000,
-        top_percent: float = 0.1) -> [np.ndarray]:
+        top_percent: float = 0.1,
+        return_location: bool = False) -> [np.ndarray]:
     """
     We take the indices of the [top_percent]/top [fixed_num_pixels] of the dark channel
-    and choose the brightest/mean of the original image's corresponding pixels.
+    and choose the brightest of the original image's corresponding pixels.
     (brightest means highest sum(r, g, b) value)
 
     :param img: The original image (3-dim float64 0.0-1.0)
     :param dcp: The dark channel of the original image (1-dim float64 0.0-1.0)
-    :param use_max: If True, use the point of maximum value for atm. light. Else, the mean (a la He et al.).
     :param use_fixed_pixels: If True, use fixed pixels instead of percentage.
     :param fixed_num_pixels: Number of fixed pixels to use.
     :param top_percent: What top percentage of the dark channel to use.
-    :return: The 3-dim pixel representing the atmospheric light
+    :param return_location: If true, return the location of the atmospheric light along the vector itself.
+    :return: The 3-dim pixel representing the atmospheric light and optionally its location
     """
     assert img.dtype == np.float64 and img.ndim == 3 and np.max(img) <= 1.0
     assert dcp.dtype == np.float64 and dcp.ndim == 2 and np.max(dcp) <= 1.0
@@ -58,14 +60,15 @@ def estimate_atmospheric_light(
     brightest_indices = sorted_indices[:num_brightest]
     brightest_pixels = flat_image[brightest_indices]
 
-    if use_max:
-        # # We choose the pixel that has the highest sum(r, g, b) value in the original image
-        max_idx = np.argmax(np.sum(brightest_pixels, axis=1))
-        atmospheric_light = brightest_pixels[max_idx]
-    else:
-        atmospheric_light = np.mean(brightest_pixels, axis=0)
+    max_idx = np.argmax(np.sum(brightest_pixels, axis=1))
+    atmospheric_light = brightest_pixels[max_idx]
 
-    return np.array([atmospheric_light])
+    if return_location:
+        flat_max_idx = brightest_indices[max_idx]
+        row, col = np.unravel_index(flat_max_idx, (dcp.shape[0], dcp.shape[1]))
+        return np.array([atmospheric_light]), (col, row)
+    else:
+        return np.array([atmospheric_light])
 
 
 def estimate_transmission(img: np.ndarray, atm_light: np.ndarray, median_ksize: int = 5, omega: float = 0.95):
@@ -95,6 +98,10 @@ def estimate_transmission(img: np.ndarray, atm_light: np.ndarray, median_ksize: 
         transmission_c = cv2.medianBlur(img_norm_c, median_ksize)
         transmission_c = transmission_c.astype(np.float64) / 255.0
         transmission = np.minimum(transmission, transmission_c) if c > 0 else transmission_c
+
+    # transmission = np.min(img_normalized, axis=2)
+    # transmission = cv2.medianBlur((transmission * 255).astype(np.uint8), median_ksize)
+    # transmission = transmission.astype(np.float64) / 255.0
 
     return 1 - omega * transmission
 
@@ -194,3 +201,30 @@ def he_DarkChannel(im, sz):
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (sz, sz))
     dark = cv2.erode(dc, kernel)
     return dark
+
+
+def he_AtmLight(im, dark):
+    [h, w] = im.shape[:2]
+    imsz = h * w
+    numpx = int(max(math.floor(imsz / 1000), 1))
+    darkvec = dark.reshape(imsz)
+    imvec = im.reshape(imsz, 3)
+
+    indices = darkvec.argsort()
+    indices = indices[imsz - numpx::]
+
+    atmsum = np.zeros([1, 3])
+    for ind in range(1, numpx):
+        atmsum = atmsum + imvec[indices[ind]]
+
+    A = atmsum / numpx
+    return A
+
+def he_Recover(im, t, A, tx=0.1):
+    res = np.empty(im.shape, im.dtype)
+    t = cv2.max(t, tx)
+
+    for ind in range(0, 3):
+        res[:, :, ind] = (im[:, :, ind] - A[0, ind]) / t + A[0, ind]
+
+    return res
