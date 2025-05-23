@@ -8,6 +8,19 @@ class FusionMethod(enum.Enum):
     MULTI_SCALE = 1
 
 
+def laplacian_to_imshow_equivalent(laplacian):
+    """Convert Laplacian pyramid level to uint8 exactly like imshow would"""
+    # 1. Normalize to [-1, 1] range while preserving zero
+    normalized = laplacian / (np.maximum(np.abs(laplacian.max()),
+                                         np.abs(laplacian.min())) + 1e-6)
+
+    # 2. Shift to [0,1] range (like imshow does internally)
+    normalized = (normalized + 1.0) / 2.0
+
+    # 3. Convert to 8-bit (0-255)
+    return (normalized * 255).clip(0, 255).astype(np.uint8)
+
+
 def apply_fusion(fusion_method: int,
                  input1: np.ndarray, input2: np.ndarray,
                  weight1: np.ndarray, weight2: np.ndarray,
@@ -74,6 +87,18 @@ def multi_scale_fusion(input1: np.ndarray, input2: np.ndarray,
 
     input1_pyr = laplacian_pyramid(input1, levels)
     input2_pyr = laplacian_pyramid(input2, levels)
+
+    # print(weight1_pyr[0].dtype, weight1_pyr[0].shape, np.min(weight1_pyr[0]), np.max(weight1_pyr[0]))
+    # print(input1_pyr[0].dtype, input1_pyr[0].shape, np.min(input1_pyr[0]), np.max(input1_pyr[0]))
+
+    # for level in range(levels):
+    #     cv2.imwrite(f'test/pyr/gaussian_sharp_pyr_{level}.jpg', (weight2_pyr[level] * 255).astype(np.uint8))
+        # cv2.imwrite(f'test/pyr/laplacian_pyr_{level}.jpg', laplacian_to_imshow_equivalent(input1_pyr[level]))
+        # cv2.imwrite(f'gauss_pyr_l{level}.jpg', (weight1_pyr[level] * 255).astype(np.uint8))
+        # cv2.imshow(f'lap_pyr_l{level}', input2_pyr[level])
+
+    # print(np.min(input1_pyr[0]), np.max(input1_pyr[0]))
+    # print(np.min(input2_pyr[0]), np.max(input2_pyr[0]))
 
     fused_pyramid = []
     for l1, l2, w1, w2 in zip(input1_pyr, input2_pyr, weight1_pyr, weight2_pyr):

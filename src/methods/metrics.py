@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+from src.methods.dehazing import dark_channel, estimate_atmospheric_light, estimate_transmission
+
 
 def get_uciqe(img: np.ndarray) -> float:
     """
@@ -81,3 +83,13 @@ def get_pix_dis(histogram, pixel_count: int):
 
     res /= (pixel_count * (pixel_count - 1))
     return res
+
+
+def get_dcp(img: np.ndarray):
+    img_float = img.astype(np.float64) / 255.0
+
+    dcp = dark_channel(img_float)
+    atm_light = estimate_atmospheric_light(img_float, dcp)
+    transmission = estimate_transmission(img_float, atm_light)
+
+    return transmission

@@ -92,17 +92,26 @@ def gray_world(img: np.ndarray) -> np.ndarray:
 def iqbal_gray_world(img: np.ndarray) -> np.ndarray:
     assert img.dtype == np.uint8 and img.ndim == 3 and np.max(img) > 1
 
-    avg_b = np.mean(img[:, :, 0])
-    avg_g = np.mean(img[:, :, 1])
-    avg_r = np.mean(img[:, :, 2])
+    # dominans csatorna kivalasztasa
+    max_b = np.max(img[:, :, 0])
+    max_g = np.max(img[:, :, 1])
+    max_r = np.max(img[:, :, 2])
 
-    alpha = avg_b / avg_r
-    beta = avg_b / avg_g
+    if max_b == max_g == max_r:
+        dominant_channel = 0
+        non_dominant_channels = [1, 2]
+    else:
+        max_values = [max_b, max_g, max_r]
+        dominant_channel = np.argmax(max_values)
+        non_dominant_channels = [i for i in range(3) if i != dominant_channel]
 
+    avgs = [np.mean(img[:, :, 0]), np.mean(img[:, :, 1]), np.mean(img[:, :, 2])]
     res = img.copy()
 
-    res[:, :, 2] = cv2.multiply(alpha, res[:, :, 2])
-    res[:, :, 1] = cv2.multiply(beta, res[:, :, 1])
+    for c in non_dominant_channels:
+        factor = avgs[dominant_channel] / avgs[c]
+        print(f"{avgs[dominant_channel]} {avgs[c]} -- factor{c}:", factor)
+        res[:, :, c] = cv2.multiply(factor, res[:, :, c])
 
     return res
 

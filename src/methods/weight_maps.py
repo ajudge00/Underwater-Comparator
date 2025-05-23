@@ -107,8 +107,8 @@ def normalize_weight_maps(
     W_Normalized1 = (lap1 + sal1 + sat1 + reg_term) / denom
     W_Normalized2 = (lap2 + sal2 + sat2 + reg_term) / denom
 
-    W_Normalized1 = cv2.normalize(W_Normalized1, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-    W_Normalized2 = cv2.normalize(W_Normalized2, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+    W_Normalized1 = (W_Normalized1 * 255).astype(np.uint8)
+    W_Normalized2 = (W_Normalized2 * 255).astype(np.uint8)
 
     return W_Normalized1, W_Normalized2
 

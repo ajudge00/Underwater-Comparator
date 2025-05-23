@@ -285,7 +285,7 @@ class GUI(QMainWindow):
         self.yang_combo_wb_method.setCurrentIndex(0)
 
     def init_combo_boxes(self):
-        wb_items = ["Gray World"]
+        wb_items = ["Gray World", "Iqbal Gray World"]
         fusion_items = ["Naive Fusion", "Multiscale Fusion"]
         yang_pixels_considered = ["Fixed amount", "Percentage"]
         yang_trans_smoothing = ["Median Filter (Yang et al.)", "Guided Filter (He et al.)"]

@@ -11,15 +11,11 @@ def normalized_unsharp_masking(img: np.ndarray) -> np.ndarray:
     """
     assert img.dtype == np.uint8 and img.ndim == 3 and np.max(img) > 1
 
-    gaussian_filtered = cv2.GaussianBlur(img, (3, 3), 0)
-
+    gaussian_filtered = cv2.GaussianBlur(img, (3, 3), 5)
     diff = cv2.subtract(img, gaussian_filtered)
+    diff_stretched = cv2.normalize(diff, None, 0, 255, cv2.NORM_MINMAX)
 
-    diff_min = np.min(diff)
-    diff_max = np.max(diff)
-    diff_stretched = (((diff - diff_min) / (diff_max - diff_min)) * 255).astype(np.uint8)
-
-    result = cv2.add(img, diff_stretched) / 2.0
+    result = ((img.astype(np.float32) + diff_stretched.astype(np.float32)) / 2).astype(np.uint8)
 
     return result.astype(np.uint8)
 
