@@ -79,7 +79,7 @@ def get_pix_dis(histogram, pixel_count: int):
     res = 0
     for i in range(0, L - 2):
         for j in range(i + 1, L - 1):
-            res += int(histogram[i]) * int(histogram[j])
+            res += int(histogram[i]) * int(histogram[j]) * (j - i)
 
     res /= (pixel_count * (pixel_count - 1))
     return res

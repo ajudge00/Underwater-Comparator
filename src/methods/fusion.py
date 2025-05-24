@@ -88,18 +88,6 @@ def multi_scale_fusion(input1: np.ndarray, input2: np.ndarray,
     input1_pyr = laplacian_pyramid(input1, levels)
     input2_pyr = laplacian_pyramid(input2, levels)
 
-    # print(weight1_pyr[0].dtype, weight1_pyr[0].shape, np.min(weight1_pyr[0]), np.max(weight1_pyr[0]))
-    # print(input1_pyr[0].dtype, input1_pyr[0].shape, np.min(input1_pyr[0]), np.max(input1_pyr[0]))
-
-    # for level in range(levels):
-    #     cv2.imwrite(f'test/pyr/gaussian_sharp_pyr_{level}.jpg', (weight2_pyr[level] * 255).astype(np.uint8))
-        # cv2.imwrite(f'test/pyr/laplacian_pyr_{level}.jpg', laplacian_to_imshow_equivalent(input1_pyr[level]))
-        # cv2.imwrite(f'gauss_pyr_l{level}.jpg', (weight1_pyr[level] * 255).astype(np.uint8))
-        # cv2.imshow(f'lap_pyr_l{level}', input2_pyr[level])
-
-    # print(np.min(input1_pyr[0]), np.max(input1_pyr[0]))
-    # print(np.min(input2_pyr[0]), np.max(input2_pyr[0]))
-
     fused_pyramid = []
     for l1, l2, w1, w2 in zip(input1_pyr, input2_pyr, weight1_pyr, weight2_pyr):
         fused = w1 * l1 + w2 * l2

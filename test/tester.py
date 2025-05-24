@@ -2,11 +2,16 @@ import os
 
 import cv2
 import numpy as np
+from matplotlib import pyplot as plt
 
 from src.ancuti2018 import Ancuti2018
 from src.methods.metrics import get_dcp, get_uciqe
 from src.mohansimon2020 import MohanSimon2020
 from src.yang2011 import Yang2011
+from src.methods.white_balance import ancuti2018_precomp, CompChannel, gray_world
+from src.methods.contrast import gamma_correction, clahe_with_lab, histogram_linearization
+from src.methods.sharpening import normalized_unsharp_masking
+
 
 def test_all(img_args: dict):
     for original_path, alpha in img_args.items():
@@ -64,22 +69,70 @@ def test_all(img_args: dict):
             f.write(f'\tMOHAN:\t\t{mohan_dcp_median}\n')
 
 
+def test_histograms(img_path: str):
+    img = cv2.imread(img_path)
+    assert img is not None
+    filename = img_path.split('/')[-1].split('.')[0]
+
+    wb = ancuti2018_precomp(CompChannel.COMP_RED, img)
+    wb = gray_world(wb)
+    gamma = gamma_correction(wb, 2.2)
+    sharp = normalized_unsharp_masking(wb)
+    gamma_clahe = clahe_with_lab(gamma)
+    sharp_histlin, best_r = histogram_linearization(sharp)
+
+    cv2.imwrite(f'../images/testing/histograms/{filename}_gamma.jpg', gamma)
+    cv2.imwrite(f'../images/testing/histograms/{filename}_sharp.jpg', sharp)
+    cv2.imwrite(f'../images/testing/histograms/{filename}_clahe.jpg', gamma_clahe)
+    cv2.imwrite(f'../images/testing/histograms/{filename}_histlin.jpg', sharp_histlin)
+
+    plot_histogram(cv2.cvtColor(gamma, cv2.COLOR_BGR2GRAY),
+                   'Eredeti hisztogram (gamma)',
+                   '00_original_gamma'
+                   )
+    plot_histogram(cv2.cvtColor(sharp, cv2.COLOR_BGR2GRAY),
+                   'Eredeti hisztogram (élesített)',
+                   '01_original_sharp')
+    plot_histogram(cv2.cvtColor(gamma_clahe, cv2.COLOR_BGR2GRAY),
+                   'CLAHE után (gamma)',
+                   '02_clahe_gamma'
+                   )
+    plot_histogram(cv2.cvtColor(sharp_histlin, cv2.COLOR_BGR2GRAY),
+                   f'Hiszt. kiegyenl. hatványozással (élesített) (r = {str(best_r)[:5]})',
+                   '03_histlin_sharp'
+                   )
+
+
+def plot_histogram(img_gray: np.ndarray, title: str, filename: str):
+    hist = cv2.calcHist([img_gray], [0], None, [256], [0, 256])
+    hist_normalized = hist / hist.sum()
+
+    plt.figure(figsize=(10, 5))
+    plt.bar(range(256), hist_normalized.flatten(), width=1.0, color='gray')
+    plt.title(title)
+    plt.xlabel("Intenzitás (0-255)")
+    plt.ylabel("Normalizált előfordulás")
+    plt.xlim([0, 255])
+    plt.grid(axis='y', alpha=0.5)
+    # plt.show()
+
+    plt.savefig(f'../images/testing/histograms/{filename}.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+
 if __name__ == '__main__':
-    test_all({
-        '../images/testing/U-45_13.jpg': 1.0,
-        '../images/testing/UIEB_163.png': 1.0,
-        '../images/testing/UIEB_176.png': 1.0,
-        '../images/testing/UIEB_184.png': 1.0,
-        '../images/testing/UIEB_471.png': 1.0,
-        '../images/testing/UIEB_508.png': 1.0,
-        '../images/testing/UIEB_79.png': 2.8
+    # test_all({
+    #     '../images/testing/U-45_13.jpg': 1.0,
+    #     '../images/testing/UIEB_163.png': 1.0,
+    #     '../images/testing/UIEB_176.png': 1.0,
+    #     '../images/testing/UIEB_184.png': 1.0,
+    #     '../images/testing/UIEB_471.png': 1.0,
+    #     '../images/testing/UIEB_508.png': 1.0,
+    #     '../images/testing/UIEB_79.png': 2.8,
+    #     '../images/testing/UIEB_526.png': 1.0
+    # })
 
-    })
-
-    # img = cv2.imread('../images/others/autumn_fog.jpg')
-    # dcp = get_dcp(img)
-    # cv2.imshow('dcp', dcp)
-    # print(np.median(dcp))
+    test_histograms('../images/testing/UIEB_526.png')
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
